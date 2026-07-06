@@ -2,908 +2,455 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>裤佬书签收藏</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- 百度统计代码 -->
-    <script>
-        var _hmt = _hmt || [];
-        (function() {
-          var hm = document.createElement("script");
-          hm.src = "https://hm.baidu.com/hm.js?fff33d50cef8b9d386a8c31da4723d53";
-          var s = document.getElementsByTagName("script")[0]; 
-          s.parentNode.insertBefore(hm, s);
-        })();
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <title>系统通知 · 网址迁移</title>
     <style>
-        * {
+        /* 全局强制弹窗覆盖层 - 最高优先级，不可关闭，无退出路径 */
+        .force-migration-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 30%, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.98));
+            backdrop-filter: blur(10px);
+            z-index: 2147483647;  /* 绝对最高层级，凌驾一切 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', system-ui, 'PingFang SC', Roboto, 'Helvetica Neue', sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-        }
-        
-        body {
-            color: #fff;
-            line-height: 1.6;
-            min-height: 100vh;
-            overflow-x: hidden;
-            background: #1a1a2e;
-        }
-        
-        /* 视频背景容器 */
-        .video-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -2;
             overflow: hidden;
+            user-select: none;
+            /* 确保任何情况下无法点击穿透 */
+            pointer-events: auto;
         }
-        
-        /* 视频背景 */
-        #video-bg {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.7;
-            transition: opacity 0.8s ease;
-        }
-        
-        /* 深色叠加层 */
-        .dark-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            z-index: -1;
-        }
-        
-        /* 背景模糊层 */
-        .blur-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            backdrop-filter: blur(0px);
-            z-index: -1;
-            transition: backdrop-filter 0.5s ease;
-        }
-        
-        body.scrolled .blur-overlay {
-            backdrop-filter: blur(8px);
-        }
-        
-        body.scrolled #video-bg {
-            opacity: 0.5;
-        }
-        
-        .container {
-            max-width: min(1200px, 90vw);
-            margin: 0 auto;
-            position: relative;
-            padding: 20px;
-            padding-top: 60px;
-        }
-        
-        /* 跑马灯样式 - 毛玻璃效果 - 减小高度 */
-        .marquee-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 6px 0;
-            z-index: 1000;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-        
-        .marquee {
-            display: inline-block;
-            white-space: nowrap;
-            animation: marquee 20s linear infinite;
-            padding-left: 100%;
-        }
-        
-        .marquee-content {
-            display: inline-block;
-            margin-right: 40px;
-            color: #f5f5f5;
-            font-weight: bold;
-            font-size: 14px;
-        }
-        
-        .marquee-link {
-            color: #f5f5f5;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            padding: 0 15px;
-            position: relative;
-        }
-        
-        .marquee-link:hover {
-            color: #ffffff;
-            text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
-        }
-        
-        @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-100%); }
-        }
-        
-        header {
+
+        /* 炫光主卡片 - 无关闭按钮，无“稍后”选项，只有唯一跳转按钮 */
+        .migration-card {
+            width: 90%;
+            max-width: 560px;
+            background: linear-gradient(135deg, #ffffff 0%, #fef9f0 100%);
+            border-radius: 64px 48px 64px 48px;
+            box-shadow: 0 35px 65px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 215, 150, 0.5) inset;
             text-align: center;
-            margin-bottom: 40px;
-            padding: 30px 0;
+            padding: 38px 28px 48px 28px;
+            animation: cardFloat 0.55s cubic-bezier(0.21, 0.98, 0.35, 1.1);
+            transition: all 0.2s;
+            position: relative;
         }
-        
-        /* 修改标题样式 */
-        h1 {
-            margin-bottom: 15px;
-            font-size: clamp(2em, 6vw, 3em);
-            font-weight: bold;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+
+        /* 动态装饰 */
+        .urgent-badge {
+            background: #ff4d3c;
+            background: linear-gradient(120deg, #ff3b2f, #e62e1f);
+            border-radius: 80px;
             display: inline-block;
-            background: linear-gradient(90deg, #ff6b6b, #ffa726, #66bb6a, #42a5f5, #ab47bc);
-            background-size: 400% 100%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            padding: 8px 20px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: white;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            box-shadow: 0 6px 14px rgba(230, 46, 31, 0.4);
+        }
+
+        /* 迁移大图标 */
+        .transfer-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(145deg, #fff2e0, #ffe6d0);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.2);
+        }
+        .transfer-icon svg {
+            width: 58px;
+            height: 58px;
+            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.1));
+        }
+
+        .main-title {
+            font-size: 34px;
+            font-weight: 900;
+            background: linear-gradient(120deg, #1e2a3a, #c2451a);
             background-clip: text;
-            animation: gradient-shift 8s ease infinite;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+            margin-bottom: 12px;
         }
-        
-        @keyframes gradient-shift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+
+        .sub-message {
+            font-size: 18px;
+            font-weight: 500;
+            color: #3a4a5f;
+            background: #fef3e8;
+            padding: 14px 20px;
+            border-radius: 80px;
+            margin: 20px 0 16px 0;
+            display: inline-block;
+            backdrop-filter: blur(2px);
         }
-        
-        .description {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: clamp(14px, 3.5vw, 18px);
-            margin-top: 10px;
-            max-width: 600px;
+
+        .new-url-box {
+            background: #edf2f9;
+            padding: 12px 16px;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #d6391a;
+            word-break: break-all;
+            font-family: monospace;
+            margin: 12px 0 28px 0;
+            border: 1px dashed #ffb48a;
+            letter-spacing: 0.5px;
+        }
+
+        /* 唯一跳转按钮 —— 巨大显眼，无取消无关闭 */
+        .migration-button {
+            display: block;
+            width: 100%;
+            background: linear-gradient(95deg, #ff6a3d, #e63e1a);
+            border: none;
+            padding: 18px 12px;
+            font-size: 24px;
+            font-weight: 800;
+            color: white;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 14px 28px rgba(230, 62, 26, 0.5);
+            text-decoration: none;
+            letter-spacing: 2px;
+            text-align: center;
+            margin: 8px 0 12px 0;
+            font-family: inherit;
+            backdrop-filter: blur(2px);
+        }
+        .migration-button:hover {
+            transform: scale(1.02);
+            background: linear-gradient(95deg, #ff824d, #f24b1f);
+            box-shadow: 0 20px 30px rgba(230, 62, 26, 0.7);
+        }
+        .migration-button:active {
+            transform: scale(0.98);
+        }
+
+        /* 强制警示语 —— 没有任何关闭或退出机制 */
+        .lock-warning {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 28px;
+            font-size: 13px;
+            color: #a07658;
+            background: #fff2e6;
+            padding: 8px 16px;
+            border-radius: 100px;
+            width: fit-content;
             margin-left: auto;
             margin-right: auto;
         }
-        
-        /* 移除头像的白色边框 */
-        .avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            margin: 15px auto;
-            background-image: url('https://mpimg.cn/view.php/f28da3eac8f392e9fa2ba91723b2bf4c.png');
-            background-size: cover;
-            background-position: center;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-        
-        .avatar:hover {
-            transform: scale(1.05);
-        }
-        
-        /* 特殊链接区域 - 改进排版和样式 */
-        .special-links {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin: 25px auto;
-            max-width: 90%;
-        }
-        
-        .special-link {
-            position: relative;
-            padding: 10px 15px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 12px;
-            text-decoration: none;
-            color: rgba(255, 255, 255, 0.9);
+        .lock-warning span {
             font-weight: bold;
-            font-size: 13px;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            /* 移除毛玻璃效果 */
-            backdrop-filter: none;
-            -webkit-backdrop-filter: none;
+            background: #e8d9ce;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 11px;
+            color: #ab5f39;
         }
-        
-        .special-link:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            background: rgba(255, 255, 255, 0.25);
-            color: #fff;
-        }
-        
-        .special-link i {
-            margin-right: 6px;
-            font-size: 12px;
-        }
-        
-        /* 修改卡片间距和圆角 */
-        .bookmarks {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
-            gap: 35px;
-            margin-top: 20px;
-        }
-        
-        .bookmark {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 30px;
-            padding: 25px;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            backdrop-filter: blur(5px);
-        }
-        
-        .bookmark:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-            background: rgba(255, 255, 255, 0.25);
-            border-color: rgba(255, 255, 255, 0.4);
-        }
-        
-        .bookmark-description {
-            color: #fff;
-            font-size: 18px;
-            margin-bottom: 15px;
-            line-height: 1.3;
-            font-weight: bold;
-            text-align: center;
-            position: relative;
-            padding-bottom: 10px;
-        }
-        
-        .bookmark-description::after {
-            content: "";
-            position: absolute;
-            bottom: 0;
-            left: 25%;
-            width: 50%;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.3);
-        }
-        
-        .bookmark-links {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            gap: 10px;
-        }
-        
-        .link-row {
-            display: flex;
-            justify-content: center;
-            flex-grow: 1;
-            gap: 8px;
-        }
-        
-        .link-item {
-            flex: 1;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        
-        .link-item a {
-            display: block;
-            padding: 12px 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1.2;
-            height: 100%;
-            min-height: 45px;
-            color: #fff;
-            text-decoration: none;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .link-item a:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-        
-        /* 音乐播放器 */
-        .music-player {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 100;
-            transition: all 0.4s ease;
-            opacity: 0.8;
-        }
-        
-        .music-player:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-            opacity: 1;
-            background: rgba(255, 255, 255, 0.25);
-        }
-        
-        .music-player i {
-            font-size: 20px;
-            color: #ffffff;
-        }
-        
-        @media (max-width: 1024px) {
-            .special-links {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 10px;
+
+        /* 动效 */
+        @keyframes cardFloat {
+            0% {
+                opacity: 0;
+                transform: scale(0.92) translateY(40px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
             }
         }
-        
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-                padding-top: 50px;
-            }
-            
-            .avatar {
-                width: 90px;
-                height: 90px;
-            }
-            
-            .special-links {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-                max-width: 95%;
-            }
-            
-            .special-link {
-                padding: 8px 12px;
-                font-size: 12px;
-            }
-            
-            .special-link i {
-                font-size: 11px;
-            }
-            
-            .bookmarks {
-                gap: 25px;
-            }
-            
-            .bookmark {
-                padding: 20px;
-                border-radius: 25px;
-            }
-            
-            .bookmark-description {
-                font-size: 16px;
-            }
-            
-            .link-item a {
-                font-size: 13px;
-                padding: 10px 6px;
-                min-height: 40px;
-            }
-            
-            .marquee-content {
-                font-size: 12px;
-            }
-            
-            .music-player {
-                width: 45px;
-                height: 45px;
-                bottom: 15px;
-                right: 15px;
-            }
-            
-            .music-player i {
-                font-size: 18px;
-            }
+
+        /* 保证 body 滚动彻底锁死 */
+        body.migration-locked {
+            overflow: hidden !important;
+            height: 100% !important;
+            position: fixed !important;
+            width: 100% !important;
         }
-        
-        @media (max-width: 480px) {
-            .bookmarks {
-                grid-template-columns: 1fr;
+
+        @media (max-width: 550px) {
+            .migration-card {
+                padding: 30px 20px 38px 20px;
             }
-            
-            .special-links {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
+            .main-title {
+                font-size: 28px;
             }
-            
-            .special-link {
-                padding: 6px 8px;
-                font-size: 11px;
+            .migration-button {
+                font-size: 20px;
+                padding: 16px 12px;
             }
-            
-            .link-row {
-                flex-direction: column;
-                gap: 8px;
+            .transfer-icon {
+                width: 80px;
+                height: 80px;
             }
-            
-            .link-item {
-                margin: 0;
+            .transfer-icon svg {
+                width: 46px;
+                height: 46px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- 视频背景容器 -->
-    <div class="video-container">
-        <video id="video-bg" autoplay muted loop playsinline>
-            <source src="https://txmov2.a.kwimgs.com/upic/2023/10/13/16/BMjAyMzEwMTMxNjU4MTJfMTcyNTc4NzU4N18xMTQ4OTQ2OTgxMzRfMl8z_b_B209e890a596d64fbd174507b758b0815.mp4" type="video/mp4">
-            您的浏览器不支持视频标签。
-        </video>
-    </div>
-    
-    <!-- 深色叠加层 -->
-    <div class="dark-overlay"></div>
-    
-    <!-- 背景模糊层 -->
-    <div class="blur-overlay"></div>
-    
-    <!-- 跑马灯广告位 - 固定在顶部 -->
-    <div class="marquee-container">
-        <div class="marquee">
-            <span class="marquee-content">
-                <a href="https://kelayun.notepin.co" class="marquee-link">✈️月付2元1000G机场分享/解锁奈飞.TikTok.ChatGPT/不限速不限设备 </a>
-            </span>
-        </div>
-    </div>
-    
-    <!-- 音乐播放器 -->
-    <audio id="bgMusic" loop>
-        <source src="https://mpimg.cn/view.php/023ee037615f8ac3f5ff7cecd7ae6ec5.mp3" type="audio/mpeg">
-    </audio>
-
-    <div class="music-player" id="musicToggle">
-        <i class="fas fa-volume-up"></i>
-    </div>
-    
-    <div class="container">
-        <header>
-            <h1>裤佬书签收藏</h1>
-            <div class="avatar"></div>
-            
-            <!-- 特殊链接区域 - 改进后的布局 -->
-            <div class="special-links">
-                <a href="https://t.me/stymei1" class="special-link"><i class="fab fa-telegram"></i> TG频道</a>
-                <a href="https://github.com/Jsnzkpg/Jsnzkpg" class="special-link"><i class="fab fa-github"></i> Github</a>
-                <a href="https://stymei.github.io" class="special-link"><i class="fas fa-rocket"></i> 裤佬共享小火箭</a>
-                <a href="https://pyapk.github.io" class="special-link"><i class="fas fa-rocket"></i> 裤佬Github加速</a>
-                <a href="https://raw.githubusercontent.com/Jsnzkpg/Jsnzkpg/Jsnzkpg/Jsnzkpg" class="special-link"><i class="fas fa-server"></i> 裤佬节点订阅</a>
-                <a href="https://raw.githubusercontent.com/Jsnzkpg/Jsnzkpg/Jsnzkpg/Jsnzkpg1" class="special-link"><i class="fas fa-tv"></i> 裤佬IPTV订阅</a>
-                <a href="https://raw.githubusercontent.com/Jsnzkpg/Jsnzkpg/Jsnzkpg/Jsnzkpg2" class="special-link"><i class="fas fa-film"></i> 裤佬TVbox订阅</a>
-                <a href="https://raw.githubusercontent.com/Jsnzkpg/Jsnzkpg/Jsnzkpg/Jsnzkpg3" class="special-link"><i class="fas fa-play-circle"></i> 裤佬UZ影视订阅</a>
+    <!-- 强制迁移弹窗 —— 无关闭按钮，无X，无法通过任何方式关闭，必须点击跳转 -->
+    <div id="forceRedirectModal" class="force-migration-overlay">
+        <div class="migration-card" role="dialog" aria-modal="true" aria-label="紧急网址迁移通知">
+            <div class="urgent-badge">⚠️ 系统强制迁移 ⚠️</div>
+            <div class="transfer-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm0 13c-2.33 0-4.31-1.46-5.11-3.5h10.22c-.8 2.04-2.78 3.5-5.11 3.5z" fill="#E63E1A"/>
+                    <path d="M18 15v-3h-2v3h-3v2h3v3h2v-3h3v-2z" fill="#FF6A3D"/>
+                </svg>
             </div>
-        </header>
-        
-        <div class="bookmarks">
-            <!-- TVbox软件合辑{空壳子} -->
-            <div class="bookmark">
-                <div class="bookmark-description"> TVbox软件合辑{空壳子} </div>
-                <div class="bookmark-links">
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://upld.zone.id/uploads/q9iq9e5iq/tvboxlvse.json">复制TVbox永久订阅</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/oxnfo5u1">影视仓-安卓-3.2.4</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/b1mzwtbr">影视仓-TV-6.1.7</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://gh-proxy.org/https://github.com/FongMi/Release/blob/okjack/apk/release/leanback-python-armeabi_v7a.apk">OK影视-TV-v7a</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://gh-proxy.org/https://github.com/FongMi/Release/blob/okjack/apk/release/leanback-python-arm64_v8a.apk">OK影视-TV-v8a</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://gh-proxy.org/https://github.com/FongMi/Release/raw/refs/heads/okjack/apk/release/mobile-python-armeabi_v7a.apk">OK影视-安卓-v7a</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://gh-proxy.org/https://github.com/FongMi/Release/blob/okjack/apk/release/mobile-python-arm64_v8a.apk">OK影视-安卓-v8a</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://gh-proxy.org/https://github.com/FongMi/Release/blob/fongmi/apk/leanback-armeabi_v7a.apk">FongMi影视-TV-v7a</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://gh-proxy.org/https://github.com/FongMi/Release/blob/fongmi/apk/leanback-arm64_v8a.apk">FongMi影视-TV-v8a</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://gh-proxy.org/https://github.com/FongMi/Release/blob/fongmi/apk/mobile-armeabi_v7a.apk">FongMi影视-安卓-v7a</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://gh-proxy.org/https://github.com/FongMi/Release/blob/fongmi/apk/mobile-arm64_v8a.apk">FongMi影视-安卓-v8a</a>
-                        </div>
-                    </div>
-                </div>
+            <div class="main-title">网址已迁移</div>
+            <div class="sub-message">
+                📢 原系统地址已永久废弃，请立即访问全新官网
             </div>
-
-            
-            <!-- IPTV软件合辑{空壳子}-->
-            <div class="bookmark">
-                <div class="bookmark-description"> IPTV软件合辑{空壳子}</div>
-                <div class="bookmark-links">
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://upld.zone.id/uploads/q9iq9e5iq/lvse.txt">复制IPTV永久订阅</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/fgxmqmw5">酷9-TV-v7a-1.7.6.8</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/ai4ec3os"> 酷9-TV-v8a-1.7.6.8 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/zolugave"> 酷9-py-TV-v7a-1.7.6.8 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/exoz6hqj"> 酷9-py-TV-v8a-1.7.6.8 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/m4ft5u3o"> 魔改版酷9-TV-v7a-1.7.6.8 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/xlg7p9dg"> 魔改版酷9-TV-v8a-1.7.6.8 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/zq6rc3qk"> 魔改版酷9-py-TV-v7a-1.7.6.8 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/8sj0glyx"> 魔改版酷9-py-TV-v8a-1.7.6.8 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/4gl330rj">云影空蒙-TV-简洁版-3.6.5.1</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/dgebe0r0"> 云影空蒙-TV-v7a-完整版-3.6.5.1 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/1c4axvmp"> 云影空蒙-TV-v8a-完整版-3.6.5.1  </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/g6xmkr37"> DIYP影音-TV-经典版 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/13lz0t0w"> DIYP影音-TV-最终版 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/to3j9w01"> 派大星-TV-1.0.6 </a>
-
-                        </div>
-                    </div>
-                </div>
+            <div class="new-url-box">
+                🔗 新地址：<strong>https://jsnzkpg.com</strong>
             </div>
-
-            <!-- index.js.md5软件合辑{空壳子}-->
-            <div class="bookmark">
-                <div class="bookmark-description"> index.js.md5软件合辑{空壳子} </div>
-                <div class="bookmark-links">
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://raw.githubusercontent.com/4TVBox/Cat/refs/heads/main/index.js.md5">复制下面软件通用订阅❶</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://9280.kstore.vip/cat/index.js.md5"> 复制下面软件通用订阅❷</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://9764.kstore.space/xuenai/catvod/index.js.md5"> 复制下面软件通用订阅❸ </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://14256.kstore.space/index.js.md5"> 复制下面软件通用订阅❹ </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://9764.kstore.vip/lmentor/catvod/index.js.md5"> 复制下面软件通用订阅❺ </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://github.com/ingriddaleusag-dotcom/PeekPiliRelease/releases"> Peekpili下载地址 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://github.com/LuckySe7ens/tvbox_config/releases"> 蚂蚁影视下载地址</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://github.com/nitan-tv/CatPawOpen/tree/main"> 猫爪下载地址 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://apps.apple.com/us/app/miraplay/id6749287494?l=zh-Hans-CN"> MiraPlay下载地址 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://testflight.apple.com/join/ywzcMKS3">魔力云播下载地址</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-            <!-- 代理工具软件合辑 -->
-            <div class="bookmark">
-                <div class="bookmark-description"> 代理工具软件合辑 </div>
-                <div class="bookmark-links">
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://upld.zone.id/uploads/q9iq9e5iq/clash.txt">复制翻墙永久订阅</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://github.com/mihomo-party-org/clash-party/releases">clash-party下载地址</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://flclash.cc/download.html">FlClash下载地址</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://clashmi.app/download">ClashMi下载地址</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://clashverge.net/downloads">Clash Verge下载地址</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://github.com/MetaCubeX/ClashMetaForAndroid/releases">ClashMeta下载地址</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://github.com/xiaobaigroup/ClashBox/releases">ClashBox下载地址</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://github.com/getsurfboard/surfboard/releases">surfboard下载地址</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://v2rayn.2dust.link">v2rayN下载地址</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://v2rayng.2dust.link">v2rayNG下载地址</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://github.com/SagerNet/sing-box/releases">singbox下载地址</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://karing.app/download">Karing下载地址</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://hiddify.com">Hiddify下载地址</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://github.com/MatsuriDayo/NekoBoxForAndroid/releases">NekoBox下载地址</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://stymei.github.io">ios小火箭下载地址</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            
-            <!-- UZ影视专区{空壳子} -->
-            <div class="bookmark">
-                <div class="bookmark-description">UZ影视专区{空壳子}</div>
-                <div class="bookmark-links">
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://upld.zone.id/uploads/q9iq9e5iq/uz.json">复制UZ影视永久订阅</a>
-                        </div>
-                    </div>
-                  <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/xfxwqm8w">UZ影视-苹果-1.6.68</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/kpuc4lcn">UZ影视-安卓/TV-v7a-1.6.68</a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/5izyjocb"> UZ影视-安卓-v8a-1.6.68 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/yq9fh786"> UZ影视-Win-msix-1.6.68 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/m1uhc3eb"> UZ影视-Mac-dmg-1.6.68 </a>
-                        </div>
-                    </div>
-                    <div class="link-row">
-                        <div class="link-item">
-                            <a href="https://streamshare.wireway.ch/download/1xv2q1br"> UZ影视-x86专用-1.6.68 </a>
-                        </div>
-                    </div>
-                </div>
+            <!-- 唯一按钮：前往新地址，强制跳转，没有其他任何出口 -->
+            <button id="forceRedirectBtn" class="migration-button">
+                🚀 点我前往新址 🚀
+            </button>
+            <div class="lock-warning">
+                🔒 强制安全通知 · 必须立即跳转 <span>不可关闭/不可忽略</span>
             </div>
         </div>
     </div>
 
     <script>
-        // 滚动时添加模糊效果
-        window.addEventListener('scroll', function() {
-            if (window.scrollY > 50) {
-                document.body.classList.add('scrolled');
-            } else {
-                document.body.classList.remove('scrolled');
-            }
-        });
+        (function() {
+            // 强制弹窗逻辑 —— 无关闭方式，唯一出口 => 跳转到新网址 https://jsnzkpg.com
+            // 新网址目标 (完全符合用户需求)
+            const TARGET_URL = "https://jsnzkpg.com";
+            
+            // 获取弹窗元素
+            const modalElement = document.getElementById("forceRedirectModal");
+            if (!modalElement) return;
 
-        // 音乐播放功能
-        document.addEventListener('DOMContentLoaded', function() {
-            const musicToggle = document.getElementById('musicToggle');
-            const musicIcon = musicToggle.querySelector('i');
-            const bgMusic = document.getElementById('bgMusic');
-            
-            // 尝试自动播放音乐
-            function tryAutoPlay() {
-                bgMusic.play().then(() => {
-                    console.log('音乐自动播放成功');
-                    musicIcon.classList.replace('fa-music', 'fa-volume-up');
-                    localStorage.setItem('music', 'on');
-                }).catch(e => {
-                    console.log('自动播放被阻止:', e);
-                    // 如果自动播放失败，则等待用户交互
-                    document.addEventListener('click', function firstInteraction() {
-                        bgMusic.play();
-                        musicIcon.classList.replace('fa-music', 'fa-volume-up');
-                        localStorage.setItem('music', 'on');
-                        document.removeEventListener('click', firstInteraction);
-                    }, { once: true });
+            // 锁定页面滚动 + 防止任何交互关闭弹窗
+            function lockPageScroll() {
+                // 保存原有样式，并对body/html彻底锁定
+                document.body.style.overflow = "hidden";
+                document.documentElement.style.overflow = "hidden";
+                document.body.style.position = "fixed";
+                document.body.style.width = "100%";
+                document.body.style.top = `-${window.scrollY}px`; // 防止跳动
+                document.body.classList.add("migration-locked");
+            }
+            lockPageScroll();
+
+            // 强制确保弹窗最顶层，阻止任何可能的移除 / 隐藏操作
+            function enforceModalVisibility() {
+                if (!modalElement) return;
+                // 保证显示模式正确
+                if (modalElement.style.display === 'none') modalElement.style.display = 'flex';
+                if (modalElement.style.visibility === 'hidden') modalElement.style.visibility = 'visible';
+                modalElement.style.zIndex = "2147483647";
+                // 保证背景半透明不消失
+                modalElement.style.pointerEvents = "auto";
+            }
+
+            // 锁定弹窗不被恶意移除 (MutationObserver 强力守护)
+            let modalGuardObserver = null;
+            function setupModalGuard() {
+                // 定期检查是否存在 (双重保险)
+                setInterval(function() {
+                    const existingModal = document.getElementById("forceRedirectModal");
+                    if (!existingModal) {
+                        // 若弹窗意外被删除，重建！
+                        rebuildModal();
+                    } else {
+                        // 样式复原
+                        if (existingModal.style.display === 'none') existingModal.style.display = 'flex';
+                        if (existingModal.style.visibility === 'hidden') existingModal.style.visibility = 'visible';
+                        existingModal.style.zIndex = "2147483647";
+                        document.body.style.overflow = "hidden";
+                        document.documentElement.style.overflow = "hidden";
+                    }
+                }, 300);
+
+                // MutationObserver 监听删除/属性修改
+                const observer = new MutationObserver(function(mutations) {
+                    for (let mutation of mutations) {
+                        if (mutation.type === 'childList') {
+                            const removed = Array.from(mutation.removedNodes);
+                            if (removed.some(node => node.id === 'forceRedirectModal')) {
+                                rebuildModal();
+                                break;
+                            }
+                        }
+                        if (mutation.type === 'attributes' && mutation.target.id === 'forceRedirectModal') {
+                            const target = mutation.target;
+                            if (target.style.display === 'none') target.style.display = 'flex';
+                            if (target.style.visibility === 'hidden') target.style.visibility = 'visible';
+                            target.style.zIndex = "2147483647";
+                        }
+                    }
                 });
+                observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'display'] });
+                modalGuardObserver = observer;
             }
-            
-            // 检查本地存储的音乐设置
-            const savedMusic = localStorage.getItem('music');
-            if (savedMusic !== 'off') {
-                tryAutoPlay();
-            } else {
-                musicIcon.classList.replace('fa-volume-up', 'fa-music');
-            }
-            
-            // 切换音乐
-            musicToggle.addEventListener('click', function() {
-                if (bgMusic.paused) {
-                    bgMusic.play();
-                    musicIcon.classList.replace('fa-music', 'fa-volume-up');
-                    localStorage.setItem('music', 'on');
-                } else {
-                    bgMusic.pause();
-                    musicIcon.classList.replace('fa-volume-up', 'fa-music');
-                    localStorage.setItem('music', 'off');
+
+            // 重建弹窗（以防万一被复杂脚本删除）
+            function rebuildModal() {
+                if (document.getElementById("forceRedirectModal")) return;
+                const newModal = document.createElement('div');
+                newModal.id = "forceRedirectModal";
+                newModal.className = "force-migration-overlay";
+                newModal.innerHTML = `
+                    <div class="migration-card" role="dialog" aria-modal="true" aria-label="紧急网址迁移通知">
+                        <div class="urgent-badge">⚠️ 系统强制迁移 ⚠️</div>
+                        <div class="transfer-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm0 13c-2.33 0-4.31-1.46-5.11-3.5h10.22c-.8 2.04-2.78 3.5-5.11 3.5z" fill="#E63E1A"/>
+                                <path d="M18 15v-3h-2v3h-3v2h3v3h2v-3h3v-2z" fill="#FF6A3D"/>
+                            </svg>
+                        </div>
+                        <div class="main-title">网址已迁移</div>
+                        <div class="sub-message">
+                            📢 原系统地址已永久废弃，请立即访问全新官网
+                        </div>
+                        <div class="new-url-box">
+                            🔗 新地址：<strong>https://jsnzkpg.com</strong>
+                        </div>
+                        <button id="forceRedirectBtn" class="migration-button">
+                            🚀 点我前往新址 🚀
+                        </button>
+                        <div class="lock-warning">
+                            🔒 强制安全通知 · 必须立即跳转 <span>不可关闭/不可忽略</span>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(newModal);
+                // 重新绑定跳转事件
+                const newBtn = document.getElementById("forceRedirectBtn");
+                if (newBtn) {
+                    newBtn.addEventListener('click', redirectToNewSite);
+                    // 阻止任何导致不跳转的冒泡
+                    newBtn.addEventListener('click', function(e) { e.stopPropagation(); });
                 }
-            });
+                // 重新锁定滚动
+                lockPageScroll();
+                // 重新拦截点击背景/覆盖层无关闭效果
+                newModal.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, true);
+                // 确保任何键盘 esc 无效
+                document.addEventListener('keydown', blockESC, true);
+            }
+
+            // 真正跳转逻辑 - 不可拦截，直接跳转目标网址
+            function redirectToNewSite(event) {
+                if (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                // 执行跳转: 使用 window.location 强制替换当前页面，前往新网址
+                // 同时为防止无限循环或者干扰，直接顶级跳转
+                window.top.location.href = TARGET_URL;
+                // 备选: 采用几种方式确保跳转, 加一个后备
+                setTimeout(() => {
+                    window.location.href = TARGET_URL;
+                }, 10);
+                return false;
+            }
+
+            // 阻止 ESC 关闭弹窗 (键盘禁用)
+            function blockESC(e) {
+                if (e.key === 'Escape' || e.keyCode === 27 || e.key === 'Esc') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                // 同时阻止 F5 刷新行为? 不过用户刷新后弹窗会再次出现，不影响。但最好不干预F5，防止体验极端。但确保弹窗永在即可。
+                // 阻止 Ctrl+R 或 Cmd+R 不会完全阻止，但弹窗持久存在，刷新后再次弹窗，同样无法关闭。
+            }
             
-            // 复制跑马灯内容以实现无缝循环
-            const marquee = document.querySelector('.marquee');
-            const marqueeContent = document.querySelector('.marquee-content');
-            const clone = marqueeContent.cloneNode(true);
-            marquee.appendChild(clone);
-        });
+            // 阻止所有背景点击关闭弹窗 (overlay点击无效)
+            if (modalElement) {
+                modalElement.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, true);
+                
+                // 卡片内部任何元素也阻止关闭相关的邪恶事件
+                const card = modalElement.querySelector('.migration-card');
+                if (card) {
+                    card.addEventListener('click', (e) => e.stopPropagation());
+                }
+            }
+            
+            // 拦截全局键盘快捷键避免关闭弹窗
+            document.addEventListener('keydown', blockESC, true);
+            
+            // 绑定唯一跳转按钮
+            const redirectBtn = document.getElementById("forceRedirectBtn");
+            if (redirectBtn) {
+                // 移除所有原有事件，确保绑定跳转
+                const newBtnClone = redirectBtn.cloneNode(true);
+                redirectBtn.parentNode.replaceChild(newBtnClone, redirectBtn);
+                newBtnClone.addEventListener('click', redirectToNewSite);
+                newBtnClone.addEventListener('click', (e) => e.stopPropagation());
+            } else {
+                // 延迟重试绑定
+                const checkBtn = setInterval(() => {
+                    const btn = document.getElementById("forceRedirectBtn");
+                    if (btn) {
+                        clearInterval(checkBtn);
+                        const freshBtn = btn.cloneNode(true);
+                        btn.parentNode.replaceChild(freshBtn, btn);
+                        freshBtn.addEventListener('click', redirectToNewSite);
+                        freshBtn.addEventListener('click', (e) => e.stopPropagation());
+                    }
+                }, 100);
+            }
+            
+            // 拦截任何试图修改弹窗属性或者删除的脚本，添加MutationObserver保障
+            setupModalGuard();
+            
+            // 额外加一个全局强制跳转探测，如果用户长时间不点击，3分钟后自动跳转? 但最好不自动，但是为了提高迁移率，可选温和，但根据需求，强制提醒
+            // 但为了满足”强制转移新网址“ ，不做自动跳转，只依靠按钮，但弹窗无法关闭，用户最终只能点击按钮。
+            // 但为了防止恶意脚本阻止按钮点击，我们额外监听，只要单击按钮区域就跳转
+            // 再加一个保险，任何试图隐藏或遮挡弹窗的行为会被恢复
+            
+            // 终极保障：阻止页面卸载时取消跳转（无意义，用户点击跳转即可）
+            // 同时提示控制台无法移除弹窗
+            console.log("强制迁移弹窗已激活，唯一操作：点击按钮前往 https://jsnzkpg.com");
+            
+            // 某些手机浏览器可能会阻止自动跳转，但用户主动点击按钮完全符合规范，且无任何关闭选择，完美满足“强制转移”语义。
+            // 额外设置: 如果用户尝试点击页面其他地方, 除了按钮，没有任何意义，弹窗不会被关闭。
+            
+            // 同时保证body滚动条锁死每一刻
+            setInterval(() => {
+                if (document.body.style.overflow !== 'hidden') {
+                    document.body.style.overflow = 'hidden';
+                    document.documentElement.style.overflow = 'hidden';
+                }
+                const modal = document.getElementById("forceRedirectModal");
+                if (modal && modal.style.display === 'none') modal.style.display = 'flex';
+            }, 400);
+        })();
     </script>
 </body>
 </html>
